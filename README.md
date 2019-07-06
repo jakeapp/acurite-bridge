@@ -50,10 +50,14 @@ The configuration for the weatherstation directory should include something like
 	RewriteCond %{REQUEST_FILENAME}\.php -f
 	RewriteRule ^(.*)$ $1.php
 
-The weatherbridge uses http so you need to have Apache listening on port 80. If running with SSL remember to disable it for the weatherstation script:
+The weatherbridge uses http so you need to have Apache listening on port 80. If running with SSL remember to disable it for the weatherstation script, and also consider not logging the constant traffic.
 
 	RewriteRule "^/weatherstation" - [L]
 	# other rules that redirect traffic to 443
+
+        # don't log the constant bridge traffic 
+        SetEnvIf Request_URI "^/weatherstation.*$" dontlog
+        CustomLog ${APACHE_LOG_DIR}/access.log combined env=!dontlog
 
 ### Debugging:
 Normal messages in the log  (LOGRESPONSE=true) look like:
