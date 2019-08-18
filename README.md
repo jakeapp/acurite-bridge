@@ -59,6 +59,48 @@ The weatherbridge uses http so you need to have Apache listening on port 80. If 
         SetEnvIf Request_URI "^/weatherstation.*$" dontlog
         CustomLog ${APACHE_LOG_DIR}/access.log combined env=!dontlog
 
+### Notes on Nginx (as reverse proxy to apache server) Configuration:
+
+```
+server {
+        listen                  80;
+        server_name             hubapi.myacurite.com;
+        server_tokens           off;
+        proxy_buffering         off;
+        location / {
+          if (!-e $request_filename){
+              rewrite ^(.*)$ /$1.php;
+          }
+          proxy_pass http://$location of apache php server$:$port$;
+          }
+        }
+```
+
+(any help documenting how to get nginx working as php server welcome)
+
+
+### How to flash the memory of the Smarthub to update Wunderground settings
+  Wunderground made a change from passwords to keys for personal weather station updates.  As of August 2019 it is still possible to send http updates to rtupdate.wunderground.com directly from the Smarthub, but without the correct password (now your "key") it won't work.  You can make changes to the Smarthub memory once your server is up and functioning correctly by temporarily modifying the line towards the end of the updateweatherstation.php file in the following way:
+
+  ```
+        echo "{\"localtime\":"."\"$timestr\",\"checkversion\":\"224\",\"ID1\":\"$YOUR_PSW_ID$\",\"PASSWORD1\":\"$YOUR_KEY\",\"sensor1\":\"$8_DIGIT_ID_OF_PWS$\",\"elevation\":\"$ELEVATION_IN_FT$\"}";
+  ```
+
+  save the file, the hub will soon be getting json responses to update memory values. Revert to the original:
+
+  ```
+        echo "{\"localtime\":"."\"$timestr\",\"checkversion\":\"224\"}";
+  ```
+
+Wait a few seconds and save again. This will resume sending the default json updates.
+
+Note: Wireshark is your friend to see whats going on. 
+
+  If your device is now sending the correct http string you can take away the rtupdate.wunderground.com entry in DNSmasq/resolver; etc/hosts file of your router...
+
+Note:  It is important to fill in the correct elevation of your hub to get accurate readings for your barometric pressure.
+
+
 ### Debugging:
 Normal messages in the log  (LOGRESPONSE=true) look like:
 
